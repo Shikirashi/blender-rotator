@@ -26,22 +26,31 @@ def orbit_timer():
     global last_activity, orbiting
     global initial_rotation, initial_location
 
-    context = bpy.context
-    idle = time.time() - last_activity
+    now = time.time()
+    idle = now - last_activity
 
-    area = next((a for a in context.screen.areas if a.type == 'VIEW_3D'), None)
-    if not area:
+    # find a 3D view safely
+    area = None
+    region_3d = None
+
+    for window in bpy.context.window_manager.windows:
+        screen = window.screen
+        for a in screen.areas:
+            if a.type == 'VIEW_3D':
+                area = a
+                region_3d = a.spaces.active.region_3d
+                break
+        if area:
+            break
+
+    if not region_3d:
         return 0.02
 
-    region_3d = area.spaces.active.region_3d
-
-    # START ORBIT AFTER IDLE TIME
     if idle > IDLE_TIME:
 
         if not orbiting:
             orbiting = True
 
-            # save starting view
             initial_rotation = region_3d.view_rotation.copy()
             initial_location = region_3d.view_location.copy()
 
@@ -53,7 +62,6 @@ def orbit_timer():
                 icon='INFO'
             )
 
-        # ORBIT MOTION
         rot = mathutils.Matrix.Rotation(ORBIT_SPEED, 3, 'Z')
 
         region_3d.view_location = rot @ region_3d.view_location
@@ -77,7 +85,10 @@ class IdleTracker(bpy.types.Operator):
         global last_activity, orbiting
         global initial_rotation, initial_location
 
-        if event.type == 'MOUSEMOVE':
+        if event.type in {
+            'MOUSEMOVE','LEFTMOUSE','RIGHTMOUSE','MIDDLEMOUSE',
+            'WHEELUPMOUSE','WHEELDOWNMOUSE'
+        }:
 
             last_activity = time.time()
 
