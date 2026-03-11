@@ -15,7 +15,7 @@ import aud
 import os
 from bpy.app.handlers import persistent
 
-IDLE_TIME = 10.0
+IDLE_TIME = 60.0
 ORBIT_SPEED = 0.01
 
 last_activity = time.time()
